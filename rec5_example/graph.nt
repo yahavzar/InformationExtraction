@@ -1,0 +1,5 @@
+<http://example.org/Shimon_Peres> <http://example.org/born_in> <http://example.org/Poland> .
+<http://example.org/Reuven_Rivlin> <http://example.org/president_of> <http://example.org/Israel> .
+<http://example.org/Reuven_Rivlin> <http://example.org/born_in> <http://example.org/Israel> .
+<http://example.org/Shimon_Peres> <http://example.org/president_of> <http://example.org/Israel> .
+

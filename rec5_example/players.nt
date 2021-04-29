@@ -1,0 +1,10 @@
+<http://example.org/Cristiano_Ronaldo> <http://example.org/position> <http://example.org/Forward> .
+<http://example.org/Kirill_Nababkin> <http://example.org/born_in> <http://example.org/Moscow> .
+<http://example.org/Lionel_Messi> <http://example.org/dob> <http://example.org/1987-06-24> .
+<http://example.org/Kirill_Nababkin> <http://example.org/position> <http://example.org/Right_back> .
+<http://example.org/Cristiano_Ronaldo> <http://example.org/dob> <http://example.org/1985-02-05> .
+<http://example.org/Cristiano_Ronaldo> <http://example.org/born_in> <http://example.org/Funchal> .
+<http://example.org/Lionel_Messi> <http://example.org/position> <http://example.org/Forward> .
+<http://example.org/Kirill_Nababkin> <http://example.org/dob> <http://example.org/1986-09-08> .
+<http://example.org/Lionel_Messi> <http://example.org/born_in> <http://example.org/Rosario> .
+
