@@ -22,11 +22,12 @@ def create_ontology():
     #links2 = doc.xpath("//table[@class='wikitable sortable']/tbody/tr/td[2]/a[1][text() >'2009']/../..")
     for link in movie_links:
         movie = rdflib.URIRef(EXAMPLE_PREFIX+create_name(link))
-        create_directors(graph, link, movie)
-        create_producers(graph, link, movie)
-        create_actors(graph, link, movie)
-        create_length(graph, link, movie)
-        #create_academy_award(graph, link, movie)
+        #create_directors(graph, link, movie)
+        #create_producers(graph, link, movie)
+        #create_actors(graph, link, movie)
+        #create_length(graph, link, movie)
+        #create_based_on(graph, link, movie)
+        create_released_date(graph, link, movie)
     graph.serialize("ontology.nt", format="nt")
 
 
@@ -50,25 +51,85 @@ def director_info(link):
                                      )
     return directors
 
-def create_academy_award(graph,link,movie):
-    academy_award = rdflib.URIRef(EXAMPLE_PREFIX + 'won')
-    awards = director_info(link)
-    for award in awards:
-        award_o = rdflib.URIRef(EXAMPLE_PREFIX + award.replace(" ", "_"))
-        graph.add((movie, academy_award, award_o))
+def create_released_date(graph,link,movie):
+    released_date = rdflib.URIRef(EXAMPLE_PREFIX + 'released_date')
+    dates = date_info(link)
+    for date in dates:
+        date_o = rdflib.URIRef(EXAMPLE_PREFIX + date.replace(" ", "_"))
+        graph.add((movie, released_date, date_o))
 
-def academy_award_info(link):
-    awards=[]
+def date_info(link):
+    dates=[]
     res = requests.get(WIKI_PREFIX+link)
     doc = lxml.html.fromstring(res.content)
     infobox = doc.xpath("//table[contains(@class, 'infobox')]")
     if infobox !=[]:
-        awards = infobox[0].xpath("//table//th[contains(text(), 'Directed by')]/../td/a/text() |"
-                                     "//table//th[contains(text(), 'Directed by')]/../td/div/ul/li/text()|"
-                                     "//table//th[contains(text(), 'Directed by')]/../td/div/ul/li/a/text()|"
-                                     "//table//th[contains(text(), 'Directed by')]/../td[text() !=' ']/text()"
+        dates = infobox[0].xpath("//table//th/div[contains(text(), 'Release date')]/../../td/div/ul/li/text() |"
+                                 "//table//th/div[contains(text(), 'Release date')]/../../td/div/ul/li/text()|"
+                                     "//table//th/div[contains(text(), 'Release date')]/../../td/div/ul/li/a/text()|"
+                                     "//table//th/div[contains(text(), 'Release date')]/../../td[text() !=' ']/text()|"
+                                 "//table//th/div[contains(text(), 'Publication date')]/../../td[text() !=' ']/text()|"
+                                 "//table//th[contains(text(), 'Release date')]/../td/text()|"
+                                 "//table//th/div[contains(text(), 'Release date')]/../../td/span/div/ul/li/text() |"
+                                 "//table//th/div[contains(text(), 'Release date')]/../../td/text()"
+                                 )
+
+    new_dates=[]
+    for i in range(len(dates)):
+        if  dates[i]=="" or dates[i]==" " :
+            continue
+        else :
+            check= dates[i].split()
+            for char in check :
+                if char.isnumeric():
+                    new_dates.append(dates[i])
+                    break
+
+    return new_dates
+
+
+def create_based_on(graph,link,movie):
+    based_on = rdflib.URIRef(EXAMPLE_PREFIX + 'Based_on')
+    books = book_info(link)
+    for book in books:
+        book_o = rdflib.URIRef(EXAMPLE_PREFIX + (book.replace(" ", "_")).replace('"',""))
+        graph.add((movie, based_on, book_o))
+
+def book_info(link):
+    books=[]
+    res = requests.get(WIKI_PREFIX+link)
+    doc = lxml.html.fromstring(res.content)
+    infobox = doc.xpath("//table[contains(@class, 'infobox')]")
+    if infobox !=[]:
+        books = infobox[0].xpath("//table//th[contains(text(), 'Based on')]/../td/i/a/text() |"
+                                     "//table//th[contains(text(), 'Based on')]/../td/div/ul/li/text()|"
+                                     "//table//th[contains(text(), 'Based on')]/../td/div/ul/li/a/text()|"
+                                     "//table//th[contains(text(), 'Based on')]/../td[text() !=' ']/text()|"
+                                 "//table//th[contains(text(), 'Based on')]/../td/a/text()|"
+                                 "//table//th[contains(text(), 'Based on')]/../td/div/ul/li/i/text()|"
+                                 "//table//th[contains(text(), 'Based on')]/../td/div/i/text()|"
+                                 "//table//th[contains(text(), 'Based on')]/../td/i/text()|"
+                                 "//table//th[contains(text(), 'Based on')]/../td/div/a/text()|"
+                                 "//table//th[contains(text(), 'Based on')]/../td/div/ul/li/div/a/text() | "
+                                 "//table//th[contains(text(), 'Based on')]/../td/div/a/text()|"
+                                 "//table//th[contains(text(), 'Based on')]/../td/div/ul/li/div/i/a/text()"
                                      )
-    return awards
+
+
+    new_books=[]
+    flag=False
+    for i in range(len(books)):
+        if str(books[i].replace(" ",""))=="by":
+            flag=True
+            continue
+        if (flag==True):
+            flag=False
+            continue
+        if (books[i]==" "):
+            continue
+        new_books.append(books[i])
+    return new_books
+
 
 def create_length(graph,link,movie):
     Running_time = rdflib.URIRef(EXAMPLE_PREFIX + 'Running_time')
