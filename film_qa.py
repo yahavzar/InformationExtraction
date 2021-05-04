@@ -30,14 +30,136 @@ def create_ontology():
     for link in movie_links:
         movie = rdflib.URIRef(EXAMPLE_PREFIX+create_name(link))
         create_directors(graph, link, movie)
-        #create_producers(graph, link, movie)
-        #create_actors(graph, link, movie)
-        #create_length(graph, link, movie)
-        #create_based_on(graph, link, movie)
-        #create_released_date(graph, link, movie)
+        create_producers(graph, link, movie)
+        create_actors(graph, link, movie)
+        create_length(graph, link, movie)
+        create_based_on(graph, link, movie)
+        create_released_date(graph, link, movie)
+    for link in DIRECTORS_URL:
+        create_occupartion(graph,link)
+        create_birthday(graph,link)
+    for link in PRODUCERS_URL:
+        create_occupartion(graph,link)
+        create_birthday(graph,link)
+    for link in ACTORS_URL:
+        create_occupartion(graph,link)
+        create_birthday(graph,link)
     graph.serialize("ontology.nt", format="nt")
 
+def create_occupartion(graph,link):
+    '''
 
+    :param graph:
+    :param link:
+    :return: update graph with Relation
+    '''
+    occupartion_is = rdflib.URIRef(EXAMPLE_PREFIX + 'occupartion')
+    occupartions = Occupartion_info(link)
+    people = rdflib.URIRef(EXAMPLE_PREFIX+create_name(link))
+    if occupartions!=None:
+        for occupartion in occupartions:
+            if occupartion!= ', ':
+                occupartion_o = rdflib.URIRef(EXAMPLE_PREFIX + occupartion.replace(" ", "_"))
+                graph.add((people, occupartion_is, occupartion_o))
+
+
+def Occupartion_info(link):
+    '''
+
+       :param link of movie
+       :return: xpath human
+       '''
+    occupartions = []
+    res = requests.get(WIKI_PREFIX + link)
+    doc = lxml.html.fromstring(res.content)
+    infobox = doc.xpath("//table[contains(@class, 'infobox')]")
+    if infobox != []:
+        occupartions = infobox[0].xpath("//table//th[contains(text(), 'Occupartion')]/../td/a[text() !=' ' and text()!=', ']/text() |"
+                                     "//table//th[contains(text(), 'Occupartion')]/../td/div/ul/li[text() !=' ' and text()!=', ']/text()|"
+                                     "//table//th[contains(text(), 'Occupartion')]/../td/div/ul/li/a[text() !=' ' and text()!=', ']/text()|"
+                                     "//table//th[contains(text(), 'Occupartion')]/../td[text() !=' ' and text()!=', ']/text()|"
+                                    " //table//th[contains(text(), 'Occupartion')]/../td/ul/li/a[text() !=' ' and text()!=', ']/text()"
+                                     )
+        if occupartions==[]:
+            occupartions = infobox[0].xpath("//table//th[contains(text(), 'Occupation')]/../td/a[text() !=' ' and text()!=', ']/text() |"
+                                     "//table//th[contains(text(), 'Occupation')]/../td/div/ul/li[text() !=' ' and text()!=', ']/text()|"
+                                     "//table//th[contains(text(), 'Occupation')]/../td/div/ul/li/a[text() !=' ' and text()!=', ']/text()|"
+                                    "//table//th[contains(text(), 'Occupation')]/../td/ul/li/a[text() !=' ' and text()!=', ']/text()|"
+                                     "//table//th[contains(text(),'Occupation')]/../td[text() !=' ' and text()!=', ']/text()|"
+                                            "//table//th/span[contains(text(),'Occupation(s)')]/../../td/a[text() !=' ' and text()!=', ']/text()|"
+                                            "//table//th/span[contains(text(),'Occupation(s)')]/../../td/div/ul/li[text() !=' ' and text()!=', ']/text()|"
+                                            "//table//th/span[contains(text(),'Occupation(s)')]/../../td/ul/li/a[text() !=' ' and text()!=', ']/text()|"
+                                            "//table//th/span[contains(text(),'Occupation(s)')]/../../td[text() !=' ' and text()!=', ']/text()|"
+                                            "//table//th/span[contains(text(),'Occupation(s)')]/../../td/a[text() !=' ' and text()!=', ']/text()")
+        return occupartions
+
+def create_birthday(graph,link):
+    '''
+
+    :param graph:
+    :param link:
+    :return: update graph with Relation
+    '''
+    born_at = rdflib.URIRef(EXAMPLE_PREFIX + 'born_at')
+    Birthday = BirthDay_info(link)
+    people = rdflib.URIRef(EXAMPLE_PREFIX+create_name(link))
+    if Birthday!=None:
+        for occupartion in Birthday:
+            if occupartion!= ', ':
+                date = rdflib.URIRef(EXAMPLE_PREFIX + occupartion.replace(" ", "_"))
+                graph.add((people, born_at, date))
+
+
+def BirthDay_info(link):
+    '''
+       :param link of movie
+       :return: xpath human
+       '''
+    Birthday = []
+    res = requests.get(WIKI_PREFIX + link)
+    doc = lxml.html.fromstring(res.content)
+    infobox = doc.xpath("//table[contains(@class, 'infobox')]")
+    new_dates=[]
+    if infobox != []:
+        Birthday = infobox[0].xpath( "//table//th[contains(text(), 'Born')]/../td/div/ul/li/span/span[contains(@class,'bday')]/text() |"
+            "//table//th[contains(text(), 'Born')]/../td/div/ul/li/span/span[contains(@class,'bday')]/text()|"
+            "//table//th[contains(text(), 'Born')]/../td[text() !=' ']/span/span[contains(@class,'bday')]/text()|"
+            "//table//th[contains(text(), 'Born')]/../td/span/span[contains(@class,'bday')]/text()|"
+            "//table//th[contains(text(), 'Born')]/../td/span/div/ul/li/span/span[contains(@class,'bday')]/text() |"
+            "//table//th[contains(text(), 'Born')]/../td/span/span[contains(@class,'bday')]/text()|"
+            "//table//th[contains(text(), 'Born')]/../td/div/div/ul/li/span/span[contains(@class,'bday')]/text()|"
+                                     "//table//th[contains(text(), 'Born')]/../td/span/span/span[contains(@class,'bday')]/text()")
+
+        if Birthday==[]:
+            Birthday = infobox[0].xpath("//table//th[contains(text(), 'Born')]/../td/div/ul/li/span/span/text() |"
+                                        "//table//th[contains(text(), 'Born')]/../td/div/ul/li/span/span/text()|"
+                                        "//table//th[contains(text(), 'Born')]/../td[text() !=' ']/span/span/text()|"
+                                        "//table//th[contains(text(), 'Born')]/../td[text() !=' ']/text()|"
+                                        "//table//th[contains(text(), 'Born')]/../td/span/span/text()|"
+                                        "//table//th[contains(text(), 'Born')]/../td/span/div/ul/li/span/span/text() |"
+                                        "//table//th[contains(text(), 'Born')]/../td/span/span/text()"
+                                        )
+        if Birthday == []:
+            Birthday = infobox[0].xpath(
+                "//table//th[contains(text(), 'Born')]/../td/div/ul/li/text() |"
+                "//table//th[contains(text(), 'Born')]/../td/div/ul/li/text()|"
+                "//table//th[contains(text(), 'Born')]/../td[text() !=' ']/text()|"
+                "//table//th[contains(text(), 'Born')]/../td[text() !=' ']/text()|"
+                "//table//th[contains(text(), 'Born')]/../td/span/span/text()|"
+                "//table//th[contains(text(), 'Born')]/../td/span/div/ul/li/text() |"
+                "//table//th[contains(text(), 'Born')]/../td/text()"
+            )
+        for i in range(len(Birthday)):
+                if Birthday[i] == "" or Birthday[i] == " ":
+                    continue
+                else:
+                    check = list(Birthday[i])
+                    for char in check:
+                        if char.isnumeric():
+                            new_dates.append(Birthday[i])
+                            break
+        return new_dates
+    return Birthday
 
 
 def create_directors(graph,link,movie):
@@ -71,8 +193,8 @@ def director_info(link):
                                      "//table//th[contains(text(), 'Directed by')]/../td/div/ul/li/a/text()|"
                                      "//table//th[contains(text(), 'Directed by')]/../td[text() !=' ']/text()"
                                      )
-        DIRECTORS_URL+=infobox[0].xpath( "//table//th[contains(text(), 'Starring')]/../td/a/@href|"
-                                   "//table//th[contains(text(), 'Starring')]/../td/div/ul/li/a/@href")
+        DIRECTORS_URL+=infobox[0].xpath( "//table//th[contains(text(), 'Directed by')]/../td/a/@href|"
+                                   "//table//th[contains(text(), 'Directed by')]/../td/div/ul/li/a/@href")
     return directors
 
 def create_actors(graph,link,movie):
@@ -106,8 +228,8 @@ def actor_info(link):
                                      "//table//th[contains(text(), 'Starring')]/../td/div/ul/li/a/text()|"
                                      "//table//th[contains(text(), 'Starring')]/../td[text() !=' ']/text()"
                                      )
-        ACTORS_URL+=infobox[0].xpath("//table//th[contains(text(), 'Directed by')]/../td/a/@href|"
-                                     "//table//th[contains(text(), 'Directed by')]/../td/div/ul/li/a/@href")
+        ACTORS_URL+=infobox[0].xpath("//table//th[contains(text(), 'Starring')]/../td/a/@href|"
+                                     "//table//th[contains(text(), 'Starring')]/../td/div/ul/li/a/@href")
     return actors
 
 def create_producers(graph,link,movie):
@@ -158,12 +280,12 @@ def create_released_date(graph,link,movie):
     :return: update graph with Relation
     '''
     released_date = rdflib.URIRef(EXAMPLE_PREFIX + 'released_date')
-    dates = date_info(link)
+    dates = release_date_info(link)
     for date in dates:
         date_o = rdflib.URIRef(EXAMPLE_PREFIX + date.replace(" ", "_"))
         graph.add((movie, released_date, date_o))
 
-def date_info(link):
+def release_date_info(link):
     '''
 
     :param link of movie
@@ -173,27 +295,42 @@ def date_info(link):
     res = requests.get(WIKI_PREFIX+link)
     doc = lxml.html.fromstring(res.content)
     infobox = doc.xpath("//table[contains(@class, 'infobox')]")
-    if infobox !=[]:
-        dates = infobox[0].xpath("//table//th/div[contains(text(), 'Release date')]/../../td/div/ul/li/text() |"
-                                 "//table//th/div[contains(text(), 'Release date')]/../../td/div/ul/li/text()|"
-                                     "//table//th/div[contains(text(), 'Release date')]/../../td/div/ul/li/a/text()|"
-                                     "//table//th/div[contains(text(), 'Release date')]/../../td[text() !=' ']/text()|"
-                                 "//table//th/div[contains(text(), 'Publication date')]/../../td[text() !=' ']/text()|"
-                                 "//table//th[contains(text(), 'Release date')]/../td/text()|"
-                                 "//table//th/div[contains(text(), 'Release date')]/../../td/span/div/ul/li/text() |"
-                                 "//table//th/div[contains(text(), 'Release date')]/../../td/text()"
-                                 )
-
     new_dates=[]
+    if infobox !=[]:
+        dates = infobox[0].xpath("//table//th/div[contains(text(), 'Release date')]/../../td/div/ul/li/span/span/text() |"
+                                 "//table//th/div[contains(text(), 'Release date')]/../../td/div/ul/li/span/span/text()|"
+                                     "//table//th/div[contains(text(), 'Release date')]/../../td[text() !=' ']/span/span/text()|"
+                                 "//table//th/div[contains(text(), 'Publication date')]/../../td[text() !=' ']/text()|"
+                                 "//table//th[contains(text(), 'Release date')]/../td/span/span/text()|"
+                                 "//table//th/div[contains(text(), 'Release date')]/../../td/span/div/ul/li/span/span/text() |"
+                                 "//table//th/div[contains(text(), 'Release date')]/../../td/span/span/text()"
+                                 )
+        if dates==[]:
+            dates = infobox[0].xpath(
+                "//table//th/div[contains(text(), 'Release date')]/../../td/div/ul/li/text() |"
+                "//table//th/div[contains(text(), 'Release date')]/../../td/div/ul/li/text()|"
+                "//table//th/div[contains(text(), 'Release date')]/../../td[text() !=' ']/text()|"
+                "//table//th/div[contains(text(), 'Publication date')]/../../td[text() !=' ']/text()|"
+                "//table//th[contains(text(), 'Release date')]/../td/span/span/text()|"
+                "//table//th/div[contains(text(), 'Release date')]/../../td/span/div/ul/li/text() |"
+                "//table//th/div[contains(text(), 'Release date')]/../../td/text()"
+                )
+            for i in range(len(dates)):
+                if dates[i] == "" or dates[i] == " ":
+                    continue
+                else:
+                    check = dates[i].split()
+                    for char in check:
+                        if char.isnumeric():
+                            new_dates.append(dates[i])
+                            break
+            return new_dates
+
     for i in range(len(dates)):
         if  dates[i]=="" or dates[i]==" " :
             continue
         else :
-            check= dates[i].split()
-            for char in check :
-                if char.isnumeric():
                     new_dates.append(dates[i])
-                    break
 
     return new_dates
 
@@ -316,9 +453,9 @@ def check_perosons():
     '''
     :return: check if that all persons in ontology (we used it after each xpath query)
     '''
-    global DIRECTORS_URL  #todo:change according the chack
+    global  ACTORS_URL  #todo:change according the check
     persons=[]
-    for person in DIRECTORS_URL: # todo : change it too
+    for person in ACTORS_URL: # todo : change it too
         persons.append(person.split("wiki/")[1])
     doc = open('ontology.nt', 'r').read()
     for person in persons:
@@ -329,3 +466,4 @@ if __name__ == '__main__':
 
     create_ontology()
     #checkAll()
+    #check_perosons()
