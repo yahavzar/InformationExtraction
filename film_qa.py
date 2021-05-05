@@ -1,6 +1,7 @@
 import rdflib
 import lxml.html
 import requests
+import sys
 
 '''
 Global params
@@ -55,6 +56,7 @@ def question(q,ontology):
 
         query = "select ?p                 where{<http://example.org/" + film + "> <http://example.org/Directed_by> ?p . }"
         result = list(g.query(query))
+        result.sort()
         parse_result(result)
         return
     if "produced" in q :
@@ -62,6 +64,7 @@ def question(q,ontology):
 
         query = "select ?p                 where{<http://example.org/" + film + "> <http://example.org/Produced_by> ?p . }"
         result = list(g.query(query))
+        result.sort()
         parse_result(result)
         return
     if "long is" in q:
@@ -69,6 +72,7 @@ def question(q,ontology):
 
         query = "select ?p                 where{<http://example.org/" + film + "> <http://example.org/Running_time> ?p . }"
         result = list(g.query(query))
+        result.sort()
         parse_result(result)
         return
     if "starred in" in q:
@@ -76,24 +80,28 @@ def question(q,ontology):
 
         query = "select ?p                 where{<http://example.org/" + film + "> <http://example.org/Starring> ?p . }"
         result = list(g.query(query))
+        result.sort()
         parse_result(result)
         return
     if "released" in q:
         film = (q.split("When was")[1:])[0].split("released")[0:][0].strip().replace(" ", "_")
         query = "select ?p                 where{<http://example.org/" + film + "> <http://example.org/released_date> ?p . }"
         result = list(g.query(query))
+        result.sort()
         parse_result(result)
         return
     if "born" in q:
         person = (q.split("When was")[1:])[0].split("born")[0:][0].strip().replace(" ", "_")
         query = "select ?p                 where{<http://example.org/" + person + "> <http://example.org/born_at> ?p . }"
         result = list(g.query(query))
+        result.sort()
         parse_result(result)
         return
     if "occupation" in q:
         person = (q.split("occupation of")[1:])[0].split("?")[0:][0].strip().replace(" ", "_")
         query = "select ?p                 where{<http://example.org/" + person + "> <http://example.org/occupartion> ?p . }"
         result = list(g.query(query))
+        result.sort()
         parse_result(result)
         return
     if "based on a book" in q:
@@ -136,7 +144,7 @@ def question(q,ontology):
         query = "select ?p                 where{ ?p <http://example.org/occupartion> <http://example.org/"+occupation1+">  ." \
                                                  "?p <http://example.org/occupartion> <http://example.org/"+occupation2+"> .}"
         result = list(g.query(query))
-        parse_result(result)
+        result.sort()
         print(len(result))
         return
 
@@ -162,7 +170,7 @@ def create_occupartion(graph,link):
     if occupartions!=None:
         for occupartion in occupartions:
             if occupartion!= ', ':
-                occupartion_o = rdflib.URIRef(EXAMPLE_PREFIX + occupartion.replace(" ", "_"))
+                occupartion_o = rdflib.URIRef(EXAMPLE_PREFIX + occupartion.strip().replace(" ", "_"))
                 graph.add((people, occupartion_is, occupartion_o))
 
 
@@ -194,7 +202,12 @@ def Occupartion_info(link):
                                             "//table//th/span[contains(text(),'Occupation(s)')]/../../td/ul/li/a[text() !=' ' and text()!=', ']/text()|"
                                             "//table//th/span[contains(text(),'Occupation(s)')]/../../td[text() !=' ' and text()!=', ']/text()|"
                                             "//table//th/span[contains(text(),'Occupation(s)')]/../../td/a[text() !=' ' and text()!=', ']/text()")
-        return occupartions
+        for i in range(len(occupartions)):
+            occupartions[i]=occupartions[i].lower()
+        new=[]
+        for i in range(len(occupartions)):
+            new+=occupartions[i].replace("•",",").split(",")
+        return new
 
 def create_birthday(graph,link):
     '''
@@ -209,7 +222,7 @@ def create_birthday(graph,link):
     if Birthday!=None:
         for occupartion in Birthday:
             if occupartion!= ', ':
-                date = rdflib.URIRef(EXAMPLE_PREFIX + occupartion.replace(" ", "_"))
+                date = rdflib.URIRef(EXAMPLE_PREFIX + occupartion.strip().replace(" ", "_"))
                 graph.add((people, born_at, date))
 
 
@@ -276,7 +289,7 @@ def create_directors(graph,link,movie):
     Directed_by = rdflib.URIRef(EXAMPLE_PREFIX + 'Directed_by')
     directors = director_info(link)
     for director in directors:
-        director_o = rdflib.URIRef(EXAMPLE_PREFIX + director.replace(" ", "_"))
+        director_o = rdflib.URIRef(EXAMPLE_PREFIX + director.strip().replace(" ", "_"))
         graph.add((movie, Directed_by, director_o))
 
 def director_info(link):
@@ -293,9 +306,9 @@ def director_info(link):
     global ACTORS_URL
     global PRODUCERS_URL
     if infobox !=[]:
-        directors = infobox[0].xpath("//table//th[contains(text(), 'Directed by')]/../td/a/text() |"
+        directors = infobox[0].xpath("//table//th[contains(text(), 'Directed by')]/../td/a/@title |"
                                      "//table//th[contains(text(), 'Directed by')]/../td/div/ul/li/text()|"
-                                     "//table//th[contains(text(), 'Directed by')]/../td/div/ul/li/a/text()|"
+                                     "//table//th[contains(text(), 'Directed by')]/../td/div/ul/li/a/@title|"
                                      "//table//th[contains(text(), 'Directed by')]/../td[text() !=' ']/text()"
                                      )
         director=infobox[0].xpath( "//table//th[contains(text(), 'Directed by')]/../td/a/@href|"
@@ -316,7 +329,7 @@ def create_actors(graph,link,movie):
     Starring = rdflib.URIRef(EXAMPLE_PREFIX + 'Starring')
     actors = actor_info(link)
     for actor in actors:
-        actor_o = rdflib.URIRef(EXAMPLE_PREFIX + actor.replace(" ", "_"))
+        actor_o = rdflib.URIRef(EXAMPLE_PREFIX + actor.strip().replace(" ", "_"))
         graph.add((movie, Starring, actor_o))
 
 def actor_info(link):
@@ -333,9 +346,9 @@ def actor_info(link):
     global DIRECTORS_URL
     global PRODUCERS_URL
     if infobox !=[]:
-        actors = infobox[0].xpath("//table//th[contains(text(), 'Starring')]/../td/a/text() |"
+        actors = infobox[0].xpath("//table//th[contains(text(), 'Starring')]/../td/a/@title |"
                                      "//table//th[contains(text(), 'Starring')]/../td/div/ul/li/text()|"
-                                     "//table//th[contains(text(), 'Starring')]/../td/div/ul/li/a/text()|"
+                                     "//table//th[contains(text(), 'Starring')]/../td/div/ul/li/a/@title|"
                                      "//table//th[contains(text(), 'Starring')]/../td[text() !=' ']/text()"
                                      )
         actor=infobox[0].xpath("//table//th[contains(text(), 'Starring')]/../td/a/@href|"
@@ -357,7 +370,7 @@ def create_producers(graph,link,movie):
     producer_by = rdflib.URIRef(EXAMPLE_PREFIX + 'Produced_by')
     producers = producer_info(link)
     for producer in producers:
-        producer_o = rdflib.URIRef(EXAMPLE_PREFIX + producer.replace(" ", "_"))
+        producer_o = rdflib.URIRef(EXAMPLE_PREFIX + producer.strip().replace(" ", "_"))
         graph.add((movie, producer_by, producer_o))
 
 def producer_info(link):
@@ -372,9 +385,9 @@ def producer_info(link):
     infobox = doc.xpath("//table[contains(@class, 'infobox')]")
     global PRODUCERS_URL
     if infobox !=[]:
-        producers = infobox[0].xpath("//table//th[contains(text(), 'Produced by')]/../td/a/text() |"
+        producers = infobox[0].xpath("//table//th[contains(text(), 'Produced by')]/../td/a/@title |"
                                      "//table//th[contains(text(), 'Produced by')]/../td/div/ul/li/text()|"
-                                     "//table//th[contains(text(), 'Produced by')]/../td/div/ul/li/a/text()|"
+                                     "//table//th[contains(text(), 'Produced by')]/../td/div/ul/li/a/@title|"
                                      "//table//th[contains(text(), 'Produced by')]/../td[text() !=' ' and text() !=': ']/text()"
                                      )
         producer= infobox[0].xpath("//table//th[contains(text(), 'Produced by')]/../td/a/@href|"
@@ -399,7 +412,7 @@ def create_released_date(graph,link,movie):
     released_date = rdflib.URIRef(EXAMPLE_PREFIX + 'released_date')
     dates = release_date_info(link)
     for date in dates:
-        date_o = rdflib.URIRef(EXAMPLE_PREFIX + date.replace(" ", "_"))
+        date_o = rdflib.URIRef(EXAMPLE_PREFIX + date.strip().replace(" ", "_"))
         graph.add((movie, released_date, date_o))
 
 def release_date_info(link):
@@ -463,7 +476,7 @@ def create_based_on(graph,link,movie):
     based_on = rdflib.URIRef(EXAMPLE_PREFIX + 'Based_on')
     books = book_info(link)
     for book in books:
-        book_o = rdflib.URIRef(EXAMPLE_PREFIX + (book.replace(" ", "_")).replace('"',""))
+        book_o = rdflib.URIRef(EXAMPLE_PREFIX + (book.replace(" ", "_").strip()).replace('"',""))
         graph.add((movie, based_on, book_o))
 
 def book_info(link):
@@ -477,18 +490,18 @@ def book_info(link):
     doc = lxml.html.fromstring(res.content)
     infobox = doc.xpath("//table[contains(@class, 'infobox')]")
     if infobox !=[]:
-        books = infobox[0].xpath("//table//th[contains(text(), 'Based on')]/../td/i/a/text() |"
+        books = infobox[0].xpath("//table//th[contains(text(), 'Based on')]/../td/i/a/@title |"
                                      "//table//th[contains(text(), 'Based on')]/../td/div/ul/li/text()|"
-                                     "//table//th[contains(text(), 'Based on')]/../td/div/ul/li/a/text()|"
+                                     "//table//th[contains(text(), 'Based on')]/../td/div/ul/li/a/@title|"
                                      "//table//th[contains(text(), 'Based on')]/../td[text() !=' ']/text()|"
-                                 "//table//th[contains(text(), 'Based on')]/../td/a/text()|"
+                                 "//table//th[contains(text(), 'Based on')]/../td/a/@title|"
                                  "//table//th[contains(text(), 'Based on')]/../td/div/ul/li/i/text()|"
                                  "//table//th[contains(text(), 'Based on')]/../td/div/i/text()|"
                                  "//table//th[contains(text(), 'Based on')]/../td/i/text()|"
-                                 "//table//th[contains(text(), 'Based on')]/../td/div/a/text()|"
-                                 "//table//th[contains(text(), 'Based on')]/../td/div/ul/li/div/a/text() | "
-                                 "//table//th[contains(text(), 'Based on')]/../td/div/a/text()|"
-                                 "//table//th[contains(text(), 'Based on')]/../td/div/ul/li/div/i/a/text()")
+                                 "//table//th[contains(text(), 'Based on')]/../td/div/a/@title|"
+                                 "//table//th[contains(text(), 'Based on')]/../td/div/ul/li/div/a/@title | "
+                                 "//table//th[contains(text(), 'Based on')]/../td/div/a/@title|"
+                                 "//table//th[contains(text(), 'Based on')]/../td/div/ul/li/div/i/a/@title")
 
     new_books=[]
     flag=False
@@ -516,7 +529,7 @@ def create_length(graph,link,movie):
     Running_time = rdflib.URIRef(EXAMPLE_PREFIX + 'Running_time')
     lentgth = length_info(link)
     for l in lentgth:
-        length_o = rdflib.URIRef(EXAMPLE_PREFIX + l.replace(" ", "_"))
+        length_o = rdflib.URIRef(EXAMPLE_PREFIX + l.strip().replace(" ", "_"))
         graph.add((movie, Running_time, length_o))
 
 def length_info(link):
@@ -543,7 +556,7 @@ def create_name(link):
     :param link:
     :return: movie's name
     '''
-    name = link.split("wiki/")[1].replace(" ", "_")
+    name = link.split("wiki/")[1].strip().replace(" ", "_")
     return name
 
 
@@ -580,9 +593,19 @@ def check_perosons():
             print(person)
 
 if __name__ == '__main__':
-    ontology = 'ontology.nt'
-    #create_ontology()
+    args = sys.argv
+    if len(args)<3:
+        print("invalid number of args!")
+    else:
+        if args[1]=="question":
+            ontology='ontology.nt'
+            question(args[2],ontology)
+        elif args[1]== "create":
+            create_ontology()
+        else:
+            print("invalid command!")
+
     #checkAll()
     #check_perosons()
-    q="Who starred in The Shape of Water?"
-    question(q,ontology)
+    #="Is The Brave (2012 film) based on a book?"
+    #question(q,ontology)
