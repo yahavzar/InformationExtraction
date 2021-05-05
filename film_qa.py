@@ -46,6 +46,109 @@ def create_ontology():
         create_birthday(graph,link)
     graph.serialize("ontology.nt", format="nt")
 
+
+def question(q,ontology):
+    g = rdflib.Graph()
+    g.parse(ontology, format="nt")
+    if "directed" in q :
+        film = (q.split("directed")[1:])[0].split("?")[0:][0].strip().replace(" ","_")
+
+        query = "select ?p                 where{<http://example.org/" + film + "> <http://example.org/Directed_by> ?p . }"
+        result = list(g.query(query))
+        parse_result(result)
+        return
+    if "produced" in q :
+        film = (q.split("produced")[1:])[0].split("?")[0:][0].strip().replace(" ","_")
+
+        query = "select ?p                 where{<http://example.org/" + film + "> <http://example.org/Produced_by> ?p . }"
+        result = list(g.query(query))
+        parse_result(result)
+        return
+    if "long is" in q:
+        film = (q.split("long is")[1:])[0].split("?")[0:][0].strip().replace(" ", "_")
+
+        query = "select ?p                 where{<http://example.org/" + film + "> <http://example.org/Running_time> ?p . }"
+        result = list(g.query(query))
+        parse_result(result)
+        return
+    if "starred in" in q:
+        film = (q.split("starred in")[1:])[0].split("?")[0:][0].strip().replace(" ", "_")
+
+        query = "select ?p                 where{<http://example.org/" + film + "> <http://example.org/Starring> ?p . }"
+        result = list(g.query(query))
+        parse_result(result)
+        return
+    if "released" in q:
+        film = (q.split("When was")[1:])[0].split("released")[0:][0].strip().replace(" ", "_")
+        query = "select ?p                 where{<http://example.org/" + film + "> <http://example.org/released_date> ?p . }"
+        result = list(g.query(query))
+        parse_result(result)
+        return
+    if "born" in q:
+        person = (q.split("When was")[1:])[0].split("born")[0:][0].strip().replace(" ", "_")
+        query = "select ?p                 where{<http://example.org/" + person + "> <http://example.org/born_at> ?p . }"
+        result = list(g.query(query))
+        parse_result(result)
+        return
+    if "occupation" in q:
+        person = (q.split("occupation of")[1:])[0].split("?")[0:][0].strip().replace(" ", "_")
+        query = "select ?p                 where{<http://example.org/" + person + "> <http://example.org/occupartion> ?p . }"
+        result = list(g.query(query))
+        parse_result(result)
+        return
+    if "based on a book" in q:
+        film = (q.split("Is")[1:])[0].split("based")[0:][0].strip().replace(" ", "_")
+        query = "select ?p                 where{<http://example.org/" + film + ">  <http://example.org/Based_on> ?p . }"
+        result = list(g.query(query))
+        if len(result)>0:
+            print("Yes")
+        else:
+            print("No")
+        return
+    if "star in" in q:
+        person = (q.split("Did")[1:])[0].split("star")[0:][0].strip()
+        film = (q.split("star in")[1:])[0].split("?")[0:][0].strip().replace(" ", "_")
+        query = "select ?p              where{ <http://example.org/" + film + "> <http://example.org/Starring> ?p . }"
+        result = list(g.query(query))
+        new_result=[]
+        for i in range(len(result)):
+            new_result.append(
+                str(result[i]).replace("(rdflib.term.URIRef('http://example.org/", "").replace("'),)", "").replace("_"," "))
+        if person in new_result:
+            print("Yes")
+        else:
+            print("No")
+        return
+    if "based on books" in q:
+        query = "select distinct ?f                 where{?f  <http://example.org/Based_on> ?b . }"
+        result = list(g.query(query))
+        print(len(result))
+        return
+    if "won an academy award" in q:
+        person = (q.split("starring")[1:])[0].split("won an academy")[0:][0].strip().replace(" ", "_")
+        query = "select ?f                where{ ?f  <http://example.org/Starring> <http://example.org/"+ person +"> . }"
+        result = list(g.query(query))
+        print(len(result))
+        return
+    if "are also" in q:
+        occupation1 = (q.split("How many")[1:])[0].split("are also")[0:][0].strip().replace(" ", "_")
+        occupation2 = (q.split("are also")[1:])[0].split("?")[0:][0].strip().replace(" ", "_")
+        query = "select ?p                 where{ ?p <http://example.org/occupartion> <http://example.org/"+occupation1+">  ." \
+                                                 "?p <http://example.org/occupartion> <http://example.org/"+occupation2+"> .}"
+        result = list(g.query(query))
+        parse_result(result)
+        print(len(result))
+        return
+
+def parse_result(result):
+    for i in range(len(result)):
+        print(
+            str(result[i]).replace("(rdflib.term.URIRef('http://example.org/", "").replace("'),)", "").replace("_",
+                                                                                                               " "),
+            end="")
+        if i < len(result) - 1:
+            print(", ", end="")
+
 def create_occupartion(graph,link):
     '''
 
@@ -187,14 +290,19 @@ def director_info(link):
     doc = lxml.html.fromstring(res.content)
     infobox = doc.xpath("//table[contains(@class, 'infobox')]")
     global DIRECTORS_URL
+    global ACTORS_URL
+    global PRODUCERS_URL
     if infobox !=[]:
         directors = infobox[0].xpath("//table//th[contains(text(), 'Directed by')]/../td/a/text() |"
                                      "//table//th[contains(text(), 'Directed by')]/../td/div/ul/li/text()|"
                                      "//table//th[contains(text(), 'Directed by')]/../td/div/ul/li/a/text()|"
                                      "//table//th[contains(text(), 'Directed by')]/../td[text() !=' ']/text()"
                                      )
-        DIRECTORS_URL+=infobox[0].xpath( "//table//th[contains(text(), 'Directed by')]/../td/a/@href|"
+        director=infobox[0].xpath( "//table//th[contains(text(), 'Directed by')]/../td/a/@href|"
                                    "//table//th[contains(text(), 'Directed by')]/../td/div/ul/li/a/@href")
+        for d in director:
+            if d not in DIRECTORS_URL and d not in ACTORS_URL and d not in PRODUCERS_URL:
+                DIRECTORS_URL.append(d)
     return directors
 
 def create_actors(graph,link,movie):
@@ -222,14 +330,20 @@ def actor_info(link):
     doc = lxml.html.fromstring(res.content)
     infobox = doc.xpath("//table[contains(@class, 'infobox')]")
     global ACTORS_URL
+    global DIRECTORS_URL
+    global PRODUCERS_URL
     if infobox !=[]:
         actors = infobox[0].xpath("//table//th[contains(text(), 'Starring')]/../td/a/text() |"
                                      "//table//th[contains(text(), 'Starring')]/../td/div/ul/li/text()|"
                                      "//table//th[contains(text(), 'Starring')]/../td/div/ul/li/a/text()|"
                                      "//table//th[contains(text(), 'Starring')]/../td[text() !=' ']/text()"
                                      )
-        ACTORS_URL+=infobox[0].xpath("//table//th[contains(text(), 'Starring')]/../td/a/@href|"
+        actor=infobox[0].xpath("//table//th[contains(text(), 'Starring')]/../td/a/@href|"
                                      "//table//th[contains(text(), 'Starring')]/../td/div/ul/li/a/@href")
+
+        for a in actor:
+            if a not in ACTORS_URL and a not in DIRECTORS_URL and a not in PRODUCERS_URL:
+                ACTORS_URL.append(a)
     return actors
 
 def create_producers(graph,link,movie):
@@ -263,8 +377,11 @@ def producer_info(link):
                                      "//table//th[contains(text(), 'Produced by')]/../td/div/ul/li/a/text()|"
                                      "//table//th[contains(text(), 'Produced by')]/../td[text() !=' ' and text() !=': ']/text()"
                                      )
-        PRODUCERS_URL+= infobox[0].xpath("//table//th[contains(text(), 'Produced by')]/../td/a/@href|"
+        producer= infobox[0].xpath("//table//th[contains(text(), 'Produced by')]/../td/a/@href|"
                                    "//table//th[contains(text(), 'Produced by')]/../td/div/ul/li/a/@href")
+        for p in producer:
+            if p not in ACTORS_URL and p not in DIRECTORS_URL and p not in PRODUCERS_URL:
+                PRODUCERS_URL.append(p)
 
     return producers
 
@@ -463,7 +580,9 @@ def check_perosons():
             print(person)
 
 if __name__ == '__main__':
-
-    create_ontology()
+    ontology = 'ontology.nt'
+    #create_ontology()
     #checkAll()
     #check_perosons()
+    q="Who starred in The Shape of Water?"
+    question(q,ontology)
