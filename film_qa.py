@@ -595,7 +595,7 @@ def check_perosons():
 if __name__ == '__main__':
     args = sys.argv
     if len(args)<3:
-        print("invalid number of args!")
+        print("invalid number of args - try again")
     else:
         if args[1]=="question":
             ontology='ontology.nt'
@@ -603,7 +603,7 @@ if __name__ == '__main__':
         elif args[1]== "create":
             create_ontology()
         else:
-            print("invalid command!")
+            print("invalid command - try again.")
 
     #checkAll()
     #check_perosons()
