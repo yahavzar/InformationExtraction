@@ -1,8 +1,10 @@
+import re
+
 import rdflib
 import lxml.html
 import requests
 import sys
-
+import datetime
 '''
 Global params
 '''
@@ -106,14 +108,40 @@ def question(q,ontology):
         query = "select ?p                 where{<http://example.org/" + film + "> <http://example.org/released_date> ?p . }"
         result = list(g.query(query))
         result.sort()
-        parse_result(result)
+        result2 = []
+        for i in range(len(result)):
+            temp = (
+                str(result[i]).replace("(rdflib.term.URIRef('http://example.org/", "").replace("'),)", "").replace("_",
+                                                                                                                   " "))
+            if re.match(r'([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]))', temp)==None:
+                match = re.match(r'.*([1-3][0-9]{3})', temp)
+                if match:
+                    result2.append(match.group(1))
+            else:
+                result2.append(temp)
+        parse_result(result2)
         return
     if "born" in q:
         person = (q.split("When was")[1:])[0].split("born")[0:][0].strip().replace(" ", "_")
         query = "select ?p                 where{<http://example.org/" + person + "> <http://example.org/born_at> ?p . }"
         result = list(g.query(query))
         result.sort()
-        parse_result(result)
+        result2=[]
+        for i in range(len(result)):
+           temp=(
+                str(result[i]).replace("(rdflib.term.URIRef('http://example.org/", "").replace("'),)", "").replace("_",
+                                                                                                                   " "))
+           if re.match(r'([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]))', temp) == None:
+               match = re.match(r'([1-3][0-9]{3})', temp)
+               if match:
+                   result2.append(match.group(1))
+               else:
+                   match = re.match(r'.*([1-3][0-9]{3})', temp)
+                   if match:
+                       result2.append(match.group(1))
+           else:
+                result2.append(temp)
+        parse_result(result2)
         return
     if "occupation" in q:
         person = (q.split("occupation of")[1:])[0].split("?")[0:][0].strip().replace(" ", "_")
@@ -525,6 +553,7 @@ def book_info(infobox):
 
     new_books=[]
     flag=False
+    check=infobox[0].xpath("//table//th[contains(text(), 'Based on')]")
     for i in range(len(books)):
         if str(books[i].replace(" ",""))=="by":
             flag=True
