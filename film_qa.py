@@ -30,25 +30,43 @@ def create_ontology():
     global PRODUCERS_URL
     for link in movie_links:
         movie = rdflib.URIRef(EXAMPLE_PREFIX+create_name(link))
-        create_directors(graph, link, movie)
-        create_producers(graph, link, movie)
-        create_actors(graph, link, movie)
-        create_length(graph, link, movie)
-        create_based_on(graph, link, movie)
-        create_released_date(graph, link, movie)
+        res = requests.get(WIKI_PREFIX + link)
+        doc = lxml.html.fromstring(res.content)
+        infobox = doc.xpath("//table[contains(@class, 'infobox')]")
+        create_directors(graph, infobox, movie)
+        create_producers(graph, infobox, movie)
+        create_actors(graph, infobox, movie)
+        create_length(graph, infobox, movie)
+        create_based_on(graph, infobox, movie)
+        create_released_date(graph, infobox, movie)
     for link in DIRECTORS_URL:
-        create_occupartion(graph,link)
-        create_birthday(graph,link)
+        res = requests.get(WIKI_PREFIX + link)
+        doc = lxml.html.fromstring(res.content)
+        infobox = doc.xpath("//table[contains(@class, 'infobox')]")
+        create_occupartion(graph,link,infobox)
+        create_birthday(graph,link,infobox)
     for link in PRODUCERS_URL:
-        create_occupartion(graph,link)
-        create_birthday(graph,link)
+        res = requests.get(WIKI_PREFIX + link)
+        doc = lxml.html.fromstring(res.content)
+        infobox = doc.xpath("//table[contains(@class, 'infobox')]")
+        create_occupartion(graph,link,infobox)
+        create_birthday(graph,link,infobox)
     for link in ACTORS_URL:
-        create_occupartion(graph,link)
-        create_birthday(graph,link)
+        res = requests.get(WIKI_PREFIX + link)
+        doc = lxml.html.fromstring(res.content)
+        infobox = doc.xpath("//table[contains(@class, 'infobox')]")
+        create_occupartion(graph,link,infobox)
+        create_birthday(graph,link,infobox)
     graph.serialize("ontology.nt", format="nt")
 
 
 def question(q,ontology):
+    '''
+
+    :param q - question:
+    :param ontology:
+    :return: print answer to question using ontology
+    '''
     g = rdflib.Graph()
     g.parse(ontology, format="nt")
     if "directed" in q :
@@ -149,6 +167,10 @@ def question(q,ontology):
         return
 
 def parse_result(result):
+    '''
+    :param result:
+    :return: print result in format.
+    '''
     for i in range(len(result)):
         print(
             str(result[i]).replace("(rdflib.term.URIRef('http://example.org/", "").replace("'),)", "").replace("_",
@@ -157,15 +179,16 @@ def parse_result(result):
         if i < len(result) - 1:
             print(", ", end="")
 
-def create_occupartion(graph,link):
+def create_occupartion(graph,link,infobox):
     '''
 
     :param graph:
     :param link:
+    :param infobox
     :return: update graph with Relation
     '''
     occupartion_is = rdflib.URIRef(EXAMPLE_PREFIX + 'occupartion')
-    occupartions = Occupartion_info(link)
+    occupartions = Occupartion_info(infobox)
     people = rdflib.URIRef(EXAMPLE_PREFIX+create_name(link))
     if occupartions!=None:
         for occupartion in occupartions:
@@ -174,16 +197,13 @@ def create_occupartion(graph,link):
                 graph.add((people, occupartion_is, occupartion_o))
 
 
-def Occupartion_info(link):
+def Occupartion_info(infobox):
     '''
 
-       :param link of movie
+       :param infobox of movie
        :return: xpath human
        '''
     occupartions = []
-    res = requests.get(WIKI_PREFIX + link)
-    doc = lxml.html.fromstring(res.content)
-    infobox = doc.xpath("//table[contains(@class, 'infobox')]")
     if infobox != []:
         occupartions = infobox[0].xpath("//table//th[contains(text(), 'Occupartion')]/../td/a[text() !=' ' and text()!=', ']/text() |"
                                      "//table//th[contains(text(), 'Occupartion')]/../td/div/ul/li[text() !=' ' and text()!=', ']/text()|"
@@ -209,15 +229,16 @@ def Occupartion_info(link):
             new+=occupartions[i].replace("•",",").split(",")
         return new
 
-def create_birthday(graph,link):
+def create_birthday(graph,link,infobox):
     '''
 
-    :param graph:
-    :param link:
+    :param graph of ontology
+    :param link of person
+    :param infobox of person
     :return: update graph with Relation
     '''
     born_at = rdflib.URIRef(EXAMPLE_PREFIX + 'born_at')
-    Birthday = BirthDay_info(link)
+    Birthday = BirthDay_info(infobox)
     people = rdflib.URIRef(EXAMPLE_PREFIX+create_name(link))
     if Birthday!=None:
         for occupartion in Birthday:
@@ -226,15 +247,12 @@ def create_birthday(graph,link):
                 graph.add((people, born_at, date))
 
 
-def BirthDay_info(link):
+def BirthDay_info(infobox):
     '''
-       :param link of movie
+       :param infobox of person
        :return: xpath human
        '''
     Birthday = []
-    res = requests.get(WIKI_PREFIX + link)
-    doc = lxml.html.fromstring(res.content)
-    infobox = doc.xpath("//table[contains(@class, 'infobox')]")
     new_dates=[]
     if infobox != []:
         Birthday = infobox[0].xpath( "//table//th[contains(text(), 'Born')]/../td/div/ul/li/span/span[contains(@class,'bday')]/text() |"
@@ -278,30 +296,27 @@ def BirthDay_info(link):
     return Birthday
 
 
-def create_directors(graph,link,movie):
+def create_directors(graph,infobox,movie):
     '''
 
     :param graph:
-    :param link:
+    :param infobox:
     :param movie:
     :return: update graph with Relation
     '''
     Directed_by = rdflib.URIRef(EXAMPLE_PREFIX + 'Directed_by')
-    directors = director_info(link)
+    directors = director_info(infobox)
     for director in directors:
         director_o = rdflib.URIRef(EXAMPLE_PREFIX + director.strip().replace(" ", "_"))
         graph.add((movie, Directed_by, director_o))
 
-def director_info(link):
+def director_info(infobox):
     '''
 
-    :param link of movie
+    :param infobox of movie
     :return: xpath result
     '''
     directors=[]
-    res = requests.get(WIKI_PREFIX+link)
-    doc = lxml.html.fromstring(res.content)
-    infobox = doc.xpath("//table[contains(@class, 'infobox')]")
     global DIRECTORS_URL
     global ACTORS_URL
     global PRODUCERS_URL
@@ -318,30 +333,27 @@ def director_info(link):
                 DIRECTORS_URL.append(d)
     return directors
 
-def create_actors(graph,link,movie):
+def create_actors(graph,infobox,movie):
     '''
 
     :param graph:
-    :param link:
+    :param infobox:
     :param movie:
     :return: update graph with Relation
     '''
     Starring = rdflib.URIRef(EXAMPLE_PREFIX + 'Starring')
-    actors = actor_info(link)
+    actors = actor_info(infobox)
     for actor in actors:
         actor_o = rdflib.URIRef(EXAMPLE_PREFIX + actor.strip().replace(" ", "_"))
         graph.add((movie, Starring, actor_o))
 
-def actor_info(link):
+def actor_info(infobox):
     '''
 
-    :param link of movie
+    :param infobox of movie
     :return: xpath result
     '''
     actors=[]
-    res = requests.get(WIKI_PREFIX+link)
-    doc = lxml.html.fromstring(res.content)
-    infobox = doc.xpath("//table[contains(@class, 'infobox')]")
     global ACTORS_URL
     global DIRECTORS_URL
     global PRODUCERS_URL
@@ -359,30 +371,27 @@ def actor_info(link):
                 ACTORS_URL.append(a)
     return actors
 
-def create_producers(graph,link,movie):
+def create_producers(graph,infobox,movie):
     '''
 
     :param graph:
-    :param link:
+    :param infobox:
     :param movie:
     :return: update graph with Relation
     '''
     producer_by = rdflib.URIRef(EXAMPLE_PREFIX + 'Produced_by')
-    producers = producer_info(link)
+    producers = producer_info(infobox)
     for producer in producers:
         producer_o = rdflib.URIRef(EXAMPLE_PREFIX + producer.strip().replace(" ", "_"))
         graph.add((movie, producer_by, producer_o))
 
-def producer_info(link):
+def producer_info(infobox):
     '''
 
-    :param link of movie
+    :param infobox of movie
     :return: xpath result
     '''
     producers=[]
-    res = requests.get(WIKI_PREFIX+link)
-    doc = lxml.html.fromstring(res.content)
-    infobox = doc.xpath("//table[contains(@class, 'infobox')]")
     global PRODUCERS_URL
     if infobox !=[]:
         producers = infobox[0].xpath("//table//th[contains(text(), 'Produced by')]/../td/a/@title |"
@@ -401,30 +410,27 @@ def producer_info(link):
 
 
 
-def create_released_date(graph,link,movie):
+def create_released_date(graph,infobox,movie):
     '''
 
     :param graph:
-    :param link:
+    :param infobox:
     :param movie:
     :return: update graph with Relation
     '''
     released_date = rdflib.URIRef(EXAMPLE_PREFIX + 'released_date')
-    dates = release_date_info(link)
+    dates = release_date_info(infobox)
     for date in dates:
         date_o = rdflib.URIRef(EXAMPLE_PREFIX + date.strip().replace(" ", "_"))
         graph.add((movie, released_date, date_o))
 
-def release_date_info(link):
+def release_date_info(infobox):
     '''
 
-    :param link of movie
+    :param infobox of movie
     :return: xpath result
     '''
     dates=[]
-    res = requests.get(WIKI_PREFIX+link)
-    doc = lxml.html.fromstring(res.content)
-    infobox = doc.xpath("//table[contains(@class, 'infobox')]")
     new_dates=[]
     if infobox !=[]:
         dates = infobox[0].xpath("//table//th/div[contains(text(), 'Release date')]/../../td/div/ul/li/span/span/text() |"
@@ -465,30 +471,27 @@ def release_date_info(link):
     return new_dates
 
 
-def create_based_on(graph,link,movie):
+def create_based_on(graph,infobox,movie):
     '''
 
     :param graph:
-    :param link:
+    :param infobox:
     :param movie:
     :return: update graph with Relation
     '''
     based_on = rdflib.URIRef(EXAMPLE_PREFIX + 'Based_on')
-    books = book_info(link)
+    books = book_info(infobox)
     for book in books:
         book_o = rdflib.URIRef(EXAMPLE_PREFIX + (book.replace(" ", "_").strip()).replace('"',""))
         graph.add((movie, based_on, book_o))
 
-def book_info(link):
+def book_info(infobox):
     '''
 
-    :param link of movie
+    :param infobox of movie
     :return: xpath result
     '''
     books=[]
-    res = requests.get(WIKI_PREFIX+link)
-    doc = lxml.html.fromstring(res.content)
-    infobox = doc.xpath("//table[contains(@class, 'infobox')]")
     if infobox !=[]:
         books = infobox[0].xpath("//table//th[contains(text(), 'Based on')]/../td/i/a/@title |"
                                      "//table//th[contains(text(), 'Based on')]/../td/div/ul/li/text()|"
@@ -518,30 +521,27 @@ def book_info(link):
     return new_books
 
 
-def create_length(graph,link,movie):
+def create_length(graph,infobox,movie):
     '''
 
     :param graph:
-    :param link:
+    :param infobox:
     :param movie:
     :return: update graph with Relation
     '''
     Running_time = rdflib.URIRef(EXAMPLE_PREFIX + 'Running_time')
-    lentgth = length_info(link)
+    lentgth = length_info(infobox)
     for l in lentgth:
         length_o = rdflib.URIRef(EXAMPLE_PREFIX + l.strip().replace(" ", "_"))
         graph.add((movie, Running_time, length_o))
 
-def length_info(link):
+def length_info(infobox):
     '''
 
-    :param link of movie
+    :param infobox of movie
     :return: xpath result
     '''
     lentgth=[]
-    res = requests.get(WIKI_PREFIX+link)
-    doc = lxml.html.fromstring(res.content)
-    infobox = doc.xpath("//table[contains(@class, 'infobox')]")
     if infobox !=[]:
         lentgth = infobox[0].xpath("//table//div[contains(text(), 'Running time')]/../../td/a/text() |"
                                      "//table//div[contains(text(), 'Running time')]/../../td/div/ul/li/text()|"
@@ -594,7 +594,7 @@ def check_perosons():
 
 if __name__ == '__main__':
     args = sys.argv
-    if len(args)<3:
+    if len(args)<2 or len(args)>3:
         print("invalid number of args - try again")
     else:
         if args[1]=="question":
