@@ -222,11 +222,23 @@ def Occupartion_info(infobox):
                                             "//table//th/span[contains(text(),'Occupation(s)')]/../../td/ul/li/a[text() !=' ' and text()!=', ']/text()|"
                                             "//table//th/span[contains(text(),'Occupation(s)')]/../../td[text() !=' ' and text()!=', ']/text()|"
                                             "//table//th/span[contains(text(),'Occupation(s)')]/../../td/a[text() !=' ' and text()!=', ']/text()")
+
+
+        not_empty_str=[]
         for i in range(len(occupartions)):
-            occupartions[i]=occupartions[i].lower()
+            if (str(occupartions[i]) == " ") or (str(occupartions[i]) == '"') or (str(occupartions[i])=="'"):
+                continue
+            not_empty_str.append(occupartions[i])
+        for i in range(len(not_empty_str)):
+            not_empty_str[i]=not_empty_str[i].lower().strip()
         new=[]
-        for i in range(len(occupartions)):
-            new+=occupartions[i].replace("•",",").split(",")
+        for i in range(len(not_empty_str)):
+           elem=not_empty_str[i].replace("•",",").split(",")
+           for e in elem :
+            if e=="":
+                continue
+            else:
+                new.append(e)
         return new
 
 def create_birthday(graph,link,infobox):
@@ -392,6 +404,7 @@ def producer_info(infobox):
     :return: xpath result
     '''
     producers=[]
+    new_producers = []
     global PRODUCERS_URL
     if infobox !=[]:
         producers = infobox[0].xpath("//table//th[contains(text(), 'Produced by')]/../td/a/@title |"
@@ -404,8 +417,12 @@ def producer_info(infobox):
         for p in producer:
             if p not in ACTORS_URL and p not in DIRECTORS_URL and p not in PRODUCERS_URL:
                 PRODUCERS_URL.append(p)
+        for p in producers:
+            if str(p).strip() =="" or str(p).strip()=="(p.g.a.)" or str(p).strip()==")" or str(p).strip()=="Producers Mark":
+                continue
+            new_producers.append(p)
 
-    return producers
+    return new_producers
 
 
 
@@ -515,7 +532,7 @@ def book_info(infobox):
         if (flag==True):
             flag=False
             continue
-        if (books[i]==" "):
+        if (str(books[i])==" ") or (str(books[i])=='"'):
             continue
         new_books.append(books[i])
     return new_books
