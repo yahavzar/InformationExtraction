@@ -539,7 +539,6 @@ def book_info(infobox):
     books=[]
     if infobox !=[]:
         books = infobox[0].xpath("//table//th[contains(text(), 'Based on')]/../td/i/a/@title |"
-                                     "//table//th[contains(text(), 'Based on')]/../td/div/ul/li/text()|"
                                      "//table//th[contains(text(), 'Based on')]/../td/div/ul/li/a/@title|"
                                      "//table//th[contains(text(), 'Based on')]/../td[text() !=' ']/text()|"
                                  "//table//th[contains(text(), 'Based on')]/../td/a/@title|"
