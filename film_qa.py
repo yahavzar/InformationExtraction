@@ -206,6 +206,7 @@ def parse_result(result):
             end="")
         if i < len(result) - 1:
             print(", ", end="")
+    print()
 
 def create_occupartion(graph,link,infobox):
     '''
@@ -233,23 +234,23 @@ def Occupartion_info(infobox):
        '''
     occupartions = []
     if infobox != []:
-        occupartions = infobox[0].xpath("//table//th[contains(text(), 'Occupartion')]/../td/a[text() !=' ' and text()!=', ']/text() |"
+        occupartions = infobox[0].xpath("//table//th[contains(text(), 'Occupartion')]/../td/a[text() !=' ' and text()!=', ']/@title |"
                                      "//table//th[contains(text(), 'Occupartion')]/../td/div/ul/li[text() !=' ' and text()!=', ']/text()|"
-                                     "//table//th[contains(text(), 'Occupartion')]/../td/div/ul/li/a[text() !=' ' and text()!=', ']/text()|"
+                                     "//table//th[contains(text(), 'Occupartion')]/../td/div/ul/li/a[text() !=' ' and text()!=', ']/@title|"
                                      "//table//th[contains(text(), 'Occupartion')]/../td[text() !=' ' and text()!=', ']/text()|"
-                                    " //table//th[contains(text(), 'Occupartion')]/../td/ul/li/a[text() !=' ' and text()!=', ']/text()"
+                                    " //table//th[contains(text(), 'Occupartion')]/../td/ul/li/a[text() !=' ' and text()!=', ']/@title"
                                      )
         if occupartions==[]:
-            occupartions = infobox[0].xpath("//table//th[contains(text(), 'Occupation')]/../td/a[text() !=' ' and text()!=', ']/text() |"
+            occupartions = infobox[0].xpath("//table//th[contains(text(), 'Occupation')]/../td/a[text() !=' ' and text()!=', ']/@title |"
                                      "//table//th[contains(text(), 'Occupation')]/../td/div/ul/li[text() !=' ' and text()!=', ']/text()|"
-                                     "//table//th[contains(text(), 'Occupation')]/../td/div/ul/li/a[text() !=' ' and text()!=', ']/text()|"
-                                    "//table//th[contains(text(), 'Occupation')]/../td/ul/li/a[text() !=' ' and text()!=', ']/text()|"
+                                     "//table//th[contains(text(), 'Occupation')]/../td/div/ul/li/a[text() !=' ' and text()!=', ']/@title|"
+                                    "//table//th[contains(text(), 'Occupation')]/../td/ul/li/a[text() !=' ' and text()!=', ']/@title|"
                                      "//table//th[contains(text(),'Occupation')]/../td[text() !=' ' and text()!=', ']/text()|"
-                                            "//table//th/span[contains(text(),'Occupation(s)')]/../../td/a[text() !=' ' and text()!=', ']/text()|"
+                                            "//table//th/span[contains(text(),'Occupation(s)')]/../../td/a[text() !=' ' and text()!=', ']/@title|"
                                             "//table//th/span[contains(text(),'Occupation(s)')]/../../td/div/ul/li[text() !=' ' and text()!=', ']/text()|"
-                                            "//table//th/span[contains(text(),'Occupation(s)')]/../../td/ul/li/a[text() !=' ' and text()!=', ']/text()|"
+                                            "//table//th/span[contains(text(),'Occupation(s)')]/../../td/ul/li/a[text() !=' ' and text()!=', ']/@title|"
                                             "//table//th/span[contains(text(),'Occupation(s)')]/../../td[text() !=' ' and text()!=', ']/text()|"
-                                            "//table//th/span[contains(text(),'Occupation(s)')]/../../td/a[text() !=' ' and text()!=', ']/text()")
+                                            "//table//th/span[contains(text(),'Occupation(s)')]/../../td/a[text() !=' ' and text()!=', ']/@title")
 
 
         not_empty_str=[]
