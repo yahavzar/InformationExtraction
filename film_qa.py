@@ -4,7 +4,7 @@ import rdflib
 import lxml.html
 import requests
 import sys
-import datetime
+
 '''
 Global params
 '''
@@ -121,7 +121,7 @@ def question(q,ontology):
                 result2.append(temp)
         parse_result(result2)
         return
-    if "born" in q:
+    if "born?" in q:
         person = (q.split("When was")[1:])[0].split("born")[0:][0].strip().replace(" ", "_")
         query = "select ?p                 where{<http://example.org/" + person + "> <http://example.org/born_at> ?p . }"
         result = list(g.query(query))
@@ -151,7 +151,7 @@ def question(q,ontology):
         parse_result(result)
         return
     if "based on a book" in q:
-        film = (q.split("Is")[1:])[0].split("based")[0:][0].strip().replace(" ", "_")
+        film = (q.split("Is",1)[1:])[0].split("based")[0:][0].strip().replace(" ", "_")
         query = "select ?p                 where{<http://example.org/" + film + ">  <http://example.org/Based_on> ?p . }"
         result = list(g.query(query))
         if len(result)>0:
@@ -193,6 +193,15 @@ def question(q,ontology):
         result.sort()
         print(len(result))
         return
+    if "also playing in" in q:
+        film1= (q.split("playing in")[1:])[0].split("and also")[0:][0].strip().replace(" ", "_")
+        film2= (q.split("also playing in")[1:])[0].split("?")[0:][0].strip().replace(" ", "_")
+
+        query = "select ?p              where{ <http://example.org/" + film1 + "> <http://example.org/Starring> ?p ." \
+                                             "<http://example.org/" + film2 + "> <http://example.org/Starring> ?p . }"
+        result = list(g.query(query))
+        result.sort()
+        parse_result(result)
 
 def parse_result(result):
     '''
@@ -201,7 +210,7 @@ def parse_result(result):
     '''
     for i in range(len(result)):
         print(
-            str(result[i]).replace("(rdflib.term.URIRef('http://example.org/", "").replace("'),)", "").replace("_",
+            str(result[i]).replace("(rdflib.term.URIRef(\"http://example.org/","(rdflib.term.URIRef('http://example.org/").replace("(rdflib.term.URIRef('http://example.org/", "").replace("\"),)", "'),)").replace("'),)", "").replace("_",
                                                                                                                " "),
             end="")
         if i < len(result) - 1:
